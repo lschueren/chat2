@@ -87,6 +87,7 @@ func handleConnection(w http.ResponseWriter, r *http.Request) {
 			p.Y = (p.Y + input.DY + 50) % 50
 			if input.Char != "" {
 				state.Chars[fmt.Sprintf("%d,%d", p.X, p.Y)] = input.Char
+				p.X = (p.X + 1 + 50) % 50
 			}
 		}
 		state.Mutex.Unlock()
