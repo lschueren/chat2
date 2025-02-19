@@ -39,7 +39,7 @@ document.addEventListener("keydown", (event) => {
     else if (event.key === "ArrowRight") dx = 1;
     else if (event.key === "Backspace") {char = " "; dx = -1; } //TODO hier muss zweimal gesendet werden! 1. nachdem der char gelöscht wird 2. nachdem der cursor sich bewegt hat
     else if (event.key === "Space") {char = " "; dx = 1;}
-    else if (event.key.length === 1) {char = event.key; dx=1;} // 
+    else if (event.key.length === 1) {char = event.key;} // 
 
     ws.send(JSON.stringify({ dx, dy, char }));
 });
