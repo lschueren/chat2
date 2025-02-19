@@ -16,7 +16,6 @@ type Player struct {
 	X     int    `json:"x"`
 	Y     int    `json:"y"`
 	Color string `json:"color"`
-	Char  string `json:"char"`
 }
 
 type GameState struct {
@@ -51,7 +50,6 @@ func handleConnection(w http.ResponseWriter, r *http.Request) {
 		X:     rand.Intn(50),
 		Y:     rand.Intn(50),
 		Color: fmt.Sprintf("rgb(%d,%d,%d)", rand.Intn(256), rand.Intn(256), rand.Intn(256)),
-		Char:  "",
 	}
 
 	state.Mutex.Lock()
@@ -83,11 +81,21 @@ func handleConnection(w http.ResponseWriter, r *http.Request) {
 
 		state.Mutex.Lock()
 		if p, ok := state.Players[id]; ok {
-			p.X = (p.X + input.DX + 50) % 50
-			p.Y = (p.Y + input.DY + 50) % 50
+			// Move the player first
+			if input.DX != 0 || input.DY != 0 {
+				p.X = (p.X + input.DX + 50) % 50
+				p.Y = (p.Y + input.DY + 50) % 50
+			}
+
+			// Handle character changes after movement
 			if input.Char != "" {
-				state.Chars[fmt.Sprintf("%d,%d", p.X, p.Y)] = input.Char
-				p.X = (p.X + 1 + 50) % 50 // eher in die html packen?
+				pos := fmt.Sprintf("%d,%d", p.X, p.Y)
+				if input.Char == " " {
+					delete(state.Chars, pos) // Erase character
+				} else {
+					state.Chars[pos] = input.Char
+					p.X = (p.X + 1 + 50) % 50 // Move cursor after typing
+				}
 			}
 		}
 		state.Mutex.Unlock()
@@ -123,6 +131,6 @@ func main() {
 	http.HandleFunc("/ws", handleConnection)
 	go broadcastGameState()
 
-	fmt.Println("Server started on :8080")
-	http.ListenAndServe(":8080", nil)
+	fmt.Println("Server started on :80")
+	http.ListenAndServe(":80", nil)
 }
