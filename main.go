@@ -91,7 +91,8 @@ func handleConnection(w http.ResponseWriter, r *http.Request) {
 			if input.Char != "" {
 				pos := fmt.Sprintf("%d,%d", p.X, p.Y)
 				if input.Char == " " {
-					delete(state.Chars, pos) // Erase character
+					delete(state.Chars, pos)  // Erase character
+					p.X = (p.X + 1 + 50) % 50 // Move cursor after typing
 				} else {
 					state.Chars[pos] = input.Char
 					p.X = (p.X + 1 + 50) % 50 // Move cursor after typing
