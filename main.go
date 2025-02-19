@@ -81,21 +81,23 @@ func handleConnection(w http.ResponseWriter, r *http.Request) {
 
 		state.Mutex.Lock()
 		if p, ok := state.Players[id]; ok {
-			// Move the player first
 			if input.DX != 0 || input.DY != 0 {
 				p.X = (p.X + input.DX + 50) % 50
 				p.Y = (p.Y + input.DY + 50) % 50
-			}
-
-			// Handle character changes after movement
-			if input.Char != "" {
-				pos := fmt.Sprintf("%d,%d", p.X, p.Y)
-				if input.Char == " " {
-					delete(state.Chars, pos)  // Erase character
-					p.X = (p.X + 1 + 50) % 50 // Move cursor after typing
+			} else if input.Char != "" {
+				if input.Char == "Backspace" {
+					// Handle backspace on server
+					p.X = (p.X - 1 + 50) % 50 // Move cursor left
+					pos := fmt.Sprintf("%d,%d", p.X, p.Y)
+					delete(state.Chars, pos) // Delete character
+				} else if input.Char == " " {
+					pos := fmt.Sprintf("%d,%d", p.X, p.Y)
+					state.Chars[pos] = input.Char // Insert space
+					p.X = (p.X + 1 + 50) % 50     // Move cursor right
 				} else {
-					state.Chars[pos] = input.Char
-					p.X = (p.X + 1 + 50) % 50 // Move cursor after typing
+					pos := fmt.Sprintf("%d,%d", p.X, p.Y)
+					state.Chars[pos] = input.Char // Insert character
+					p.X = (p.X + 1 + 50) % 50     // Move cursor right
 				}
 			}
 		}
@@ -132,6 +134,6 @@ func main() {
 	http.HandleFunc("/ws", handleConnection)
 	go broadcastGameState()
 
-	fmt.Println("Server started on :80")
+	fmt.Println("Server started on:80")
 	http.ListenAndServe(":80", nil)
 }

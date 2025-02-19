@@ -12,75 +12,55 @@
 <body>
     <canvas id="gameCanvas" width="500" height="500"></canvas>
     <script>
-       const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-const gridSize = 10;
-const gridWidth = 50;
-const gridHeight = 50;
-let players = {};
-let chars = {};
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const gridSize = 10;
+        const gridWidth = 50;
+        const gridHeight = 50;
+        let players = {};
+        let chars = {};
 
-const ws = new WebSocket("ws://" + window.location.host + "/ws");
+        const ws = new WebSocket("ws://" + window.location.host + "/ws");
 
-ws.onmessage = (event) => {
-    const data = JSON.parse(event.data);
-    players = data.players;
-    chars = data.chars;
-    draw();
-};
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            players = data.players;
+            chars = data.chars;
+            draw();
+        };
 
-document.addEventListener("keydown", (event) => {
-    let dx = 0, dy = 0, char = "";
+        document.addEventListener("keydown", (event) => {
+            let dx = 0, dy = 0, char = "";
 
-    if (event.key === "ArrowUp") dy = -1;
-    else if (event.key === "ArrowDown") dy = 1;
-    else if (event.key === "ArrowLeft") dx = -1;
-    else if (event.key === "ArrowRight") dx = 1;
-    else if (event.key === "Backspace") {
-        // 1. Move cursor left first
-        ws.send(JSON.stringify({ dx: -1, dy: 0, char: "" }));
+            if (event.key === "ArrowUp") dy = -1;
+            else if (event.key === "ArrowDown") dy = 1;
+            else if (event.key === "ArrowLeft") dx = -1;
+            else if (event.key === "ArrowRight") dx = 1;
+            else if (event.key === "Backspace") char = "Backspace"; // Send Backspace command
+            else if (event.key === " ") char = " "; // Send space as a character
+            else if (event.key.length === 1) char = event.key;
 
-        // 2. Delete the character at the new position (slight delay to ensure order)
-        setTimeout(() => {
-            ws.send(JSON.stringify({ dx: 0, dy: 0, char: " " }));
-        }, 10);
+            ws.send(JSON.stringify({ dx, dy, char }));
+        });
 
-        return;
-    }
-    else if (event.key === "Space") {
-        // 1. Insert a space
-        ws.send(JSON.stringify({ dx: 0, dy: 0, char: " " }));
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // 2. Move cursor right after inserting space
-        setTimeout(() => {
-            ws.send(JSON.stringify({ dx: 1, dy: 0, char: "" }));
-        }, 10);
+            for (const key in chars) {
+                const [x, y] = key.split(",").map(Number);
+                ctx.fillStyle = "black";
+                ctx.fillText(chars[key], x * gridSize + gridSize / 4, y * gridSize + gridSize / 1.5);
+            }
 
-        return;
-    }
-    else if (event.key.length === 1) { char = event.key; }
+            for (const id in players) {
+                const p = players[id];
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x * gridSize, p.y * gridSize, gridSize, gridSize);
+            }
+        }
 
-    ws.send(JSON.stringify({ dx, dy, char }));
-});
-
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    
-    for (const key in chars) {
-        const [x, y] = key.split(",").map(Number);
-        ctx.fillStyle = "black";
-        ctx.fillText(chars[key], x * gridSize + gridSize / 4, y * gridSize + gridSize / 1.5);
-    }
-    
-    for (const id in players) {
-        const p = players[id];
-        ctx.fillStyle = p.color;
-        ctx.fillRect(p.x * gridSize, p.y * gridSize, gridSize, gridSize);
-    }
-}
-
-canvas.width = gridSize * gridWidth;
-canvas.height = gridSize * gridHeight;
+        canvas.width = gridSize * gridWidth;
+        canvas.height = gridSize * gridHeight;
     </script>
 </body>
 </html>
