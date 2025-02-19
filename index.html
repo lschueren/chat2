@@ -47,7 +47,17 @@ document.addEventListener("keydown", (event) => {
 
         return;
     }
-    else if (event.key === "Space") { char = " "; dx = 1; }
+    else if (event.key === "Space") {
+        // 1. Insert a space
+        ws.send(JSON.stringify({ dx: 0, dy: 0, char: " " }));
+
+        // 2. Move cursor right after inserting space
+        setTimeout(() => {
+            ws.send(JSON.stringify({ dx: 1, dy: 0, char: "" }));
+        }, 10);
+
+        return;
+    }
     else if (event.key.length === 1) { char = event.key; }
 
     ws.send(JSON.stringify({ dx, dy, char }));
