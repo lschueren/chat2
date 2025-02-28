@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
 	"net/http"
 	"sync"
@@ -11,12 +12,12 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// Player and Game State
 type Player struct {
 	ID    string `json:"id"`
 	X     int    `json:"x"`
 	Y     int    `json:"y"`
 	Color string `json:"color"`
-	Char  string `json:"char"`
 }
 
 type GameState struct {
@@ -33,6 +34,7 @@ var upgrader = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { retu
 var connections = make(map[*websocket.Conn]bool)
 var connMutex = sync.Mutex{}
 
+// WebSocket handler
 func handleConnection(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -51,7 +53,6 @@ func handleConnection(w http.ResponseWriter, r *http.Request) {
 		X:     rand.Intn(50),
 		Y:     rand.Intn(50),
 		Color: fmt.Sprintf("rgb(%d,%d,%d)", rand.Intn(256), rand.Intn(256), rand.Intn(256)),
-		Char:  "",
 	}
 
 	state.Mutex.Lock()
@@ -83,17 +84,26 @@ func handleConnection(w http.ResponseWriter, r *http.Request) {
 
 		state.Mutex.Lock()
 		if p, ok := state.Players[id]; ok {
-			p.X = (p.X + input.DX + 50) % 50
-			p.Y = (p.Y + input.DY + 50) % 50
+			if input.DX != 0 || input.DY != 0 {
+				p.X = (p.X + input.DX + 50) % 50
+				p.Y = (p.Y + input.DY + 50) % 50
+			}
+
 			if input.Char != "" {
-				state.Chars[fmt.Sprintf("%d,%d", p.X, p.Y)] = input.Char
-				p.X = (p.X + 1 + 50) % 50 // eher in die html packen?
+				pos := fmt.Sprintf("%d,%d", p.X, p.Y)
+				if input.Char == " " {
+					delete(state.Chars, pos)
+				} else {
+					state.Chars[pos] = input.Char
+					p.X = (p.X + 1 + 50) % 50
+				}
 			}
 		}
 		state.Mutex.Unlock()
 	}
 }
 
+// Broadcast function
 func broadcastGameState() {
 	ticker := time.NewTicker(time.Second / 60)
 	defer ticker.Stop()
@@ -118,11 +128,15 @@ func broadcastGameState() {
 	}
 }
 
+// Main function
 func main() {
 	http.Handle("/", http.FileServer(http.Dir(".")))
 	http.HandleFunc("/ws", handleConnection)
 	go broadcastGameState()
 
-	fmt.Println("Server started on :8080")
-	http.ListenAndServe(":8080", nil)
+	fmt.Println("Server started on :443 (HTTPS)")
+	err := http.ListenAndServeTLS(":443", "schueren.crt", "schueren.key", nil)
+	if err != nil {
+		log.Fatal("ListenAndServeTLS: ", err)
+	}
 }
