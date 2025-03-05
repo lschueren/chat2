@@ -136,7 +136,7 @@ func main() {
 	go broadcastGameState()
 
 	fmt.Println("Server started on :443 (HTTP)")
-	err := http.ListenAndServeTLS(":443", ".pem", "key.pem", nil)
+	err := http.ListenAndServeTLS(":443", "cert.pem", "key.pem", nil)
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)
 	}
