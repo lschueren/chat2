@@ -129,14 +129,21 @@ func broadcastGameState() {
 }
 
 // Main function
+import (
+	"fmt"
+	"log"
+	"net/http"
+)
+
 func main() {
 	http.Handle("/", http.FileServer(http.Dir(".")))
 	http.HandleFunc("/ws", handleConnection)
 	go broadcastGameState()
 
-	fmt.Println("Server started on :443 (HTTPS)")
-	err := http.ListenAndServeTLS(":443", "schueren.crt", "schueren.key", nil)
+	fmt.Println("Server started on :80 (HTTP)")
+	err := http.ListenAndServe(":80", nil) // Removed TLS and changed port to 80
 	if err != nil {
-		log.Fatal("ListenAndServeTLS: ", err)
+			log.Fatal("ListenAndServe: ", err) // Changed error message to reflect HTTP
 	}
 }
+
