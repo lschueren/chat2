@@ -135,9 +135,9 @@ func main() {
 	http.HandleFunc("/ws", handleConnection)
 	go broadcastGameState()
 
-	fmt.Println("Server started on :80 (HTTP)")
-	err := http.ListenAndServe(":80", nil) // Removed TLS and changed port to 80
+	fmt.Println("Server started on :443 (HTTP)")
+	err := http.ListenAndServeTLS(":443", ".pem", "key.pem", nil)
 	if err != nil {
-		log.Fatal("ListenAndServe: ", err) // Changed error message to reflect HTTP
+		log.Fatal("ListenAndServe: ", err)
 	}
 }
