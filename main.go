@@ -93,6 +93,7 @@ func handleConnection(w http.ResponseWriter, r *http.Request) {
 				pos := fmt.Sprintf("%d,%d", p.X, p.Y)
 				if input.Char == " " {
 					delete(state.Chars, pos)
+					p.X = (p.X + 1 + 50) % 50
 				} else {
 					state.Chars[pos] = input.Char
 					p.X = (p.X + 1 + 50) % 50
